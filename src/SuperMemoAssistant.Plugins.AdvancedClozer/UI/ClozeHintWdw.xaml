@@ -1,0 +1,129 @@
+﻿<mah:MetroWindow x:Class="SuperMemoAssistant.Plugins.AdvancedClozer.UI.ClozeHintWdw"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:local="clr-namespace:SuperMemoAssistant.Plugins.AdvancedClozer.UI"
+        mc:Ignorable="d"
+        Title="Cloze Hinter"
+        Width="250"
+        Topmost="True"
+        KeyDown="MetroWindow_KeyDown"
+        WindowStartupLocation="CenterScreen"
+        Height="240"
+        >
+  <mah:MetroWindow.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <!-- MahApps.Metro resource dictionaries. Make sure that all file names are Case Sensitive! -->
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Colors.xaml" />
+        <!-- Accent and AppTheme setting -->
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/Blue.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/BaseLight.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </mah:MetroWindow.Resources>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="2*"></RowDefinition>
+      <RowDefinition Height="1.5*"></RowDefinition>
+      <RowDefinition Height="50"></RowDefinition>
+    </Grid.RowDefinitions>
+
+    <!-- Hint Textbox and label -->
+    <Grid Grid.Row="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="1.5*"></RowDefinition>
+        <RowDefinition Height="2*"></RowDefinition>
+      </Grid.RowDefinitions>
+
+      <Label Grid.Row="0"
+             FontWeight="Bold"
+             Content="Cloze Hint:"
+             Margin="5"
+             VerticalContentAlignment="Bottom">
+      </Label>
+      <ComboBox TabIndex="0"
+                Grid.Row="1"
+                VerticalAlignment="Top"
+                Margin="5"
+                IsEditable="True"
+                Focusable="True"
+                PreviewKeyDown="ClozeHintTextbox_PreviewKeyDown"
+                Name="ClozeHintTextbox">
+      </ComboBox>
+    </Grid>
+
+    <!-- Hint Style label and radio buttons -->
+    <Grid Grid.Row="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="1*"></RowDefinition>
+        <RowDefinition Height="1.5*"></RowDefinition>
+      </Grid.RowDefinitions>
+      <Label Grid.Row="0"
+             Margin="5 0 5 0"
+             Content="Location:"
+             FontWeight="Bold"
+             VerticalContentAlignment="Bottom">
+      </Label>
+
+      <!-- Cloze Location Selection -->
+      <Grid Grid.Row="2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition></ColumnDefinition>
+          <ColumnDefinition></ColumnDefinition>
+          <ColumnDefinition></ColumnDefinition>
+          <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <Label Content="Normal:"
+               VerticalAlignment="Top"
+               Margin="5 0 0 0"></Label>
+
+        <RadioButton Name="ClozeLocationNormal"
+                     IsChecked="True"
+                     Grid.Column="1"
+                     Margin="5 5 0 5"
+                     TabIndex="1"
+                     VerticalAlignment="Top"
+                     GroupName="ClozeLocationRadioGroup">
+        </RadioButton>
+
+        <Label Content="Naess:"
+               Grid.Column="2"
+               Margin="5 0 0 0">
+        </Label>
+
+        <RadioButton Name="ClozeLocationNaess"
+                     Grid.Column="3"
+                     TabIndex="2"
+                     Margin="5 5 0 5"
+                     VerticalAlignment="Top"
+                     GroupName="ClozeLocationRadioGroup">
+        </RadioButton>
+      </Grid>
+    </Grid>
+    
+      <!-- Ok and Cancel Buttons -->
+      <Grid Grid.Row="2">
+        <Button Content="Create"
+              TabIndex="3"
+              Margin="8"
+              Grid.Column="1"
+              HorizontalAlignment="Right"
+              Name="OkBtn"
+              Click="OkBtn_Click">
+        </Button>
+        <Button Content="Cancel"
+              Margin="8"
+              TabIndex="4"
+              HorizontalAlignment="Left"
+              Name="CancelBtn"
+              Click="CancelBtn_Click">
+        </Button>
+      </Grid>
+    </Grid>
+</mah:MetroWindow>
