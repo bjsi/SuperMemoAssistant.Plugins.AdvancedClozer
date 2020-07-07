@@ -18,10 +18,24 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
 {
   public partial class ClozeHintWdw
   {
-
+    
+    /// <summary>
+    /// True if the user presses the create button, else false.
+    /// </summary>
     public bool Confirmed { get; set; } = false;
+
+    /// <summary>
+    /// The cloze hint.
+    /// </summary>
     public string Hint { get; set; }
+
+    /// <summary>
+    /// Where to place the hint
+    /// </summary>
     public ClozeLocation Location { get; set; }
+
+    public bool IsClosed { get; set; }
+
     private AdvancedClozerCfg Config => Svc<AdvancedClozerPlugin>.Plugin.Config;
     private List<string> CfgHints => Config.ComboBoxHints?.Split('\n')?.ToList();
     public List<string> AllHints = new List<string>();
@@ -33,7 +47,13 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
       FocusComboBox();
       CreateAllHints();
       ClozeHintTextbox.ItemsSource = AllHints;
+      Closed += ClozeHintWdw_Closed;
 
+    }
+
+    private void ClozeHintWdw_Closed(object sender, EventArgs e)
+    {
+      IsClosed = true;
     }
 
     /// <summary>

@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:SuperMemoAssistant.Plugins.AdvancedClozer.UI"
         mc:Ignorable="d"
         Title="Cloze Hinter"
-        Width="250"
+        Width="270"
         Topmost="True"
         KeyDown="MetroWindow_KeyDown"
         WindowStartupLocation="CenterScreen"
@@ -65,7 +65,7 @@
       </Grid.RowDefinitions>
       <Label Grid.Row="0"
              Margin="5 0 5 0"
-             Content="Location:"
+             Content="Hint Location:"
              FontWeight="Bold"
              VerticalContentAlignment="Bottom">
       </Label>
@@ -74,12 +74,13 @@
       <Grid Grid.Row="2">
         <Grid.ColumnDefinitions>
           <ColumnDefinition></ColumnDefinition>
+          <ColumnDefinition Width="0.5*"></ColumnDefinition>
           <ColumnDefinition></ColumnDefinition>
-          <ColumnDefinition></ColumnDefinition>
-          <ColumnDefinition></ColumnDefinition>
+          <ColumnDefinition Width="0.5*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <Label Content="Normal:"
+        <Label Content="[HINT]"
+               FontWeight="Bold"
                VerticalAlignment="Top"
                Margin="5 0 0 0"></Label>
 
@@ -92,7 +93,8 @@
                      GroupName="ClozeLocationRadioGroup">
         </RadioButton>
 
-        <Label Content="Naess:"
+        <Label Content="[...](HINT)"
+               FontWeight="Bold"
                Grid.Column="2"
                Margin="5 0 0 0">
         </Label>

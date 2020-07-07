@@ -68,6 +68,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
     /// <inheritdoc />
     public override bool HasSettings => true;
+    private ClozeHintWdw CurrentWdw { get; set; }
 
     #endregion
 
@@ -99,23 +100,6 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     }
 
     /// <summary>
-    /// Get the currently selected text in SM.
-    /// </summary>
-    /// <returns></returns>
-    private string GetSelectedText()
-    {
-      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrlGroup?.FocusedControl.AsHtml();
-      var htmlDoc = htmlCtrl?.GetDocument();
-      var sel = htmlDoc?.selection;
-
-      if (!(sel?.createRange() is IHTMLTxtRange textSel))
-        return null;
-
-      return textSel.text;
-    }
-
-    /// <summary>
     /// Create the cloze hint.
     /// TODO: Add proper UI locking when methods are available
     /// </summary>
@@ -128,22 +112,17 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       /// the new cloze element to modify it, then returns to the original element
 
       // Cancel if there is no currently selected text
-      if (string.IsNullOrEmpty(GetSelectedText()))
+      if (ContentUtils.GetSelectedText().IsNullOrEmpty())
         return;
 
       var options = GetClozeHintOptions();
-
-      if (options == null)
+      if (options.IsNull())
         return;
 
-      string Hint = options.Hint;
       ClozeLocation Location = options.ClozeLocation;
-
-      if (string.IsNullOrEmpty(Hint))
-      {
-        LogTo.Error("Failed to CreateClozeHint because hint was null or empty");
+      string Hint = options.Hint;
+      if (Hint.IsNullOrEmpty())
         return;
-      }
 
       // The current element we are executing GenerateCloze on
       int restoreElementId = Svc.SM.UI.ElementWdw.CurrentElementId;
@@ -153,19 +132,23 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
       if (newClozeId < 0)
       {
-        LogTo.Debug($"Failed to CreateClozeHint because GenerateCloze returned {newClozeId}");
+        string msg = "Failed to create cloze: GenerateCloze method failed.";
+        MessageBox.Show(msg);
+        LogTo.Debug(msg);
         return;
       }
 
       // Move to the new cloze, add the cloze hint
       Svc.SM.UI.ElementWdw.GoToElement(newClozeId);
 
+      // TODO: Loop over htmlCtrls for the first control with a cloze symbol
       var ctrl = Svc.SM.UI.ElementWdw.ControlGroup;
       var htmlCtrl = ctrl?.GetFirstHtmlControl()?.AsHtml();
       var text = htmlCtrl?.Text;
-      if (string.IsNullOrEmpty(text))
+      if (text.IsNullOrEmpty())
       {
-        LogTo.Error($"Failed to CreateClozeHint because attempt to get text from ControlGroup returned null or empty");
+        string msg = "Failed to create cloze: Failed to get text from the generated item";
+        LogTo.Error(msg);
         return;
       }
 
@@ -185,14 +168,12 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     {
 
       var wdwResult = OpenClozeHintWdw();
-
-      if (wdwResult == null)
+      if (wdwResult.IsNull())
         return null;
 
-      var hint = wdwResult.Hint;
+      var hint = wdwResult?.Hint;
       var location = wdwResult.Location;
-
-      if (string.IsNullOrEmpty(hint))
+      if (hint.IsNullOrEmpty())
         return null;
 
       return new ClozeHintOptions(hint, location);
@@ -202,19 +183,21 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     /// <summary>
     /// Opens a cloze hint window to get cloze hint options from the user.
     /// </summary>
-    /// <returns>ClozeHintWdw Object</returns>
+    /// <returns>ClozeHintWdw Object or null</returns>
     private ClozeHintWdw OpenClozeHintWdw()
     {
 
+      // return if ClozeHintWdw is already open
+      if (CurrentWdw != null)
+        return null;
+
       return Application.Current.Dispatcher.Invoke(() =>
       {
-        ClozeHintWdw wdw = new ClozeHintWdw();
-        wdw.ShowDialog();
-        if (wdw.Confirmed)
-        {
-          return wdw;
-        }
-        return null;
+        CurrentWdw = new ClozeHintWdw();
+        CurrentWdw.ShowDialog();
+        return CurrentWdw.Confirmed
+          ? CurrentWdw
+          : null;
       });
 
     }
