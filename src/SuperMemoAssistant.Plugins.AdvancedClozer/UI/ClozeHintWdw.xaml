@@ -117,6 +117,12 @@
              Content="Mouseover Cloze?"/>
       <CheckBox Name="HiddenClozeCheckbox"
                 TabIndex="3"/>
+      <Label Margin="8"
+             FontSize="10"
+             Foreground="Gray"
+             Name="MouseoverClozeDisclaimer"
+             Visibility="Hidden"
+             Content="(Requires MouseoverHints)"/>
     </StackPanel>
     
     <!-- Hide Context Checkbox -->
@@ -127,6 +133,12 @@
              Content="Mouseover Context?"/>
       <CheckBox Name="HiddenContextCheckbox"
                 TabIndex="4"/>
+      <Label Margin="7"
+             FontSize="10"
+             Foreground="Gray"
+             Name="MouseoverContextDisclaimer"
+             Visibility="Hidden"
+             Content="(Requires MouseoverHints)"/>
     </StackPanel>
     
       <!-- Ok and Cancel Buttons -->

@@ -60,9 +60,21 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
       FocusComboBox();
       CreateAllHints();
       SetUserDefaults();
+      CheckForMouseoverHintSvc();
       ClozeHintTextbox.ItemsSource = AllHints;
       Closed += ClozeHintWdw_Closed;
 
+    }
+
+    private void CheckForMouseoverHintSvc()
+    {
+      if (Svc<AdvancedClozerPlugin>.Plugin.mouseoverHintSvc == null)
+      {
+        HiddenClozeCheckbox.IsEnabled = false;
+        HiddenContextCheckbox.IsEnabled = false;
+        MouseoverClozeDisclaimer.Visibility = Visibility.Visible;
+        MouseoverContextDisclaimer.Visibility = Visibility.Visible;
+      }
     }
 
     private void ClozeHintWdw_Closed(object sender, EventArgs e)

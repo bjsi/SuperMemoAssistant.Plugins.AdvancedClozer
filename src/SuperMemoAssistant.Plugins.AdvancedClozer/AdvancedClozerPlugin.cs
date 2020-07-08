@@ -71,7 +71,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     /// <inheritdoc />
     public override bool HasSettings => true;
     private ClozeHintWdw CurrentWdw { get; set; }
-    private IMouseoverHintSvc mouseoverHintSvc { get; set; }
+    public IMouseoverHintSvc mouseoverHintSvc { get; set; }
 
     #endregion
 
