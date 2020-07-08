@@ -31,7 +31,7 @@
 
 namespace SuperMemoAssistant.Plugins.AdvancedClozer
 {
-    using System.Diagnostics.CodeAnalysis;
+  using System.Diagnostics.CodeAnalysis;
   using System.Linq;
   using System.Runtime.Remoting;
   using System.Windows;
@@ -72,6 +72,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     public override bool HasSettings => true;
     private ClozeHintWdw CurrentWdw { get; set; }
     public IMouseoverHintSvc mouseoverHintSvc { get; set; }
+    private readonly char[] SentenceEndingPunct = new char[] { '.', '?', '!' };
 
     #endregion
 
@@ -172,7 +173,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       {
         var toFind = Location == ClozeLocation.Inside
           ? replacement
-          : replacement.Substring(4);
+          : replacement.Substring(5);
 
         var rng = body.createTextRange();
         if (rng.findText(toFind))
@@ -180,6 +181,10 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
           rng.moveStart("character", 1);
           rng.moveEnd("character", -1);
           mouseoverHintSvc.CreateSingleHint(rng);
+
+          // This is necessary for the change to be saved
+          // Otherwise the change is only made visually and once you move away from the element, it reverts
+          htmlCtrl.Text = htmlCtrl.Text;
         }
       }
 
@@ -192,18 +197,22 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
           bool foundStart = false;
           bool foundEnd = false;
 
+          // Move the beginning of the range backwards until the first character is
+          // sentence ending punctuation
           while (rng.moveStart("character", -1) == -1)
           {
-            if (rng.text[0] == '.')
+            if (SentenceEndingPunct.Any(x => x == rng.text[0]))
             {
               foundStart = true;
               break;
             }
           }
 
+          // Move the end of the range backwards until the last character 
+          // is sentence ending punctuation
           while (rng.moveEnd("character", 1 ) == 1)
           {
-            if (rng.text.Last() == '.')
+            if (SentenceEndingPunct.Any(x => x == rng.text.Last()))
             {
               foundEnd = true;
               break;
@@ -212,7 +221,11 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
           if (foundStart && foundEnd)
           {
-            mouseoverHintSvc.HideContext(rng);
+            bool ret = mouseoverHintSvc.HideContext(rng);
+
+            // This is necessary for the change to be saved
+            // Otherwise the change is only made visually and once you move away from the element, it reverts
+            htmlCtrl.Text = htmlCtrl.Text;
           }
         }
       }

@@ -68,7 +68,8 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
 
     private void CheckForMouseoverHintSvc()
     {
-      if (Svc<AdvancedClozerPlugin>.Plugin.mouseoverHintSvc == null)
+      var svc = Svc<AdvancedClozerPlugin>.Plugin.mouseoverHintSvc;
+      if (svc == null)
       {
         HiddenClozeCheckbox.IsEnabled = false;
         HiddenContextCheckbox.IsEnabled = false;
