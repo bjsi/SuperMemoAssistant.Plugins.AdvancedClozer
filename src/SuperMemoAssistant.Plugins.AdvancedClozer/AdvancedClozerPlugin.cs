@@ -32,6 +32,7 @@
 namespace SuperMemoAssistant.Plugins.AdvancedClozer
 {
     using System.Diagnostics.CodeAnalysis;
+  using System.Linq;
   using System.Runtime.Remoting;
   using System.Windows;
   using System.Windows.Input;
@@ -40,6 +41,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
   using SuperMemoAssistant.Extensions;
   using SuperMemoAssistant.Interop.SuperMemo.Core;
   using SuperMemoAssistant.Plugins.AdvancedClozer.UI;
+  using SuperMemoAssistant.Plugins.MouseoverHints.Interop;
   using SuperMemoAssistant.Services;
   using SuperMemoAssistant.Services.IO.HotKeys;
   using SuperMemoAssistant.Services.IO.Keyboard;
@@ -69,6 +71,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     /// <inheritdoc />
     public override bool HasSettings => true;
     private ClozeHintWdw CurrentWdw { get; set; }
+    private IMouseoverHintSvc mouseoverHintSvc { get; set; }
 
     #endregion
 
@@ -97,6 +100,8 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
         CreateClozeHint
       );
 
+      mouseoverHintSvc = GetService<IMouseoverHintSvc>();
+
     }
 
     /// <summary>
@@ -115,12 +120,15 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       if (ContentUtils.GetSelectedText().IsNullOrEmpty())
         return;
 
-      var options = GetClozeHintOptions();
-      if (options.IsNull())
+      var wdw = OpenClozeHintWdw();
+      if (wdw.IsNull())
         return;
 
-      ClozeLocation Location = options.ClozeLocation;
-      string Hint = options.Hint;
+      ClozeLocation Location = wdw.Location;
+      string Hint = wdw.Hint;
+      bool HideCloze = wdw.HideCloze;
+      bool HideContext = wdw.HideContext;
+
       if (Hint.IsNullOrEmpty())
         return;
 
@@ -142,42 +150,75 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       Svc.SM.UI.ElementWdw.GoToElement(newClozeId);
 
       // TODO: Loop over htmlCtrls for the first control with a cloze symbol
-      var ctrl = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrl?.GetFirstHtmlControl()?.AsHtml();
+      var htmlCtrl = ContentUtils.GetFirstHtmlControl();
       var text = htmlCtrl?.Text;
-      if (text.IsNullOrEmpty())
+      var htmlDoc = htmlCtrl?.GetDocument();
+      var body = htmlDoc?.body as IHTMLBodyElement;
+
+      if (text.IsNullOrEmpty() || htmlCtrl.IsNull() || body.IsNull())
       {
         string msg = "Failed to create cloze: Failed to get text from the generated item";
         LogTo.Error(msg);
         return;
       }
 
-      htmlCtrl.Text = Location == ClozeLocation.Normal
-        ? htmlCtrl.Text.Replace("[...]", $"[{Hint}]")
-        : htmlCtrl.Text.Replace("[...]", $"[...]({Hint})");
+      string replacement = Location == ClozeLocation.Inside
+        ? $"[{Hint}]"
+        : $"[...]({Hint})";
+
+      htmlCtrl.Text = htmlCtrl.Text.Replace("[...]", replacement);
+
+      if (HideCloze)
+      {
+        var toFind = Location == ClozeLocation.Inside
+          ? replacement
+          : replacement.Substring(4);
+
+        var rng = body.createTextRange();
+        if (rng.findText(toFind))
+        {
+          rng.moveStart("character", 1);
+          rng.moveEnd("character", -1);
+          mouseoverHintSvc.CreateSingleHint(rng);
+        }
+      }
+
+      if (HideContext)
+      {
+        var rng = body.createTextRange();
+        if (rng.findText(replacement))
+        {
+
+          bool foundStart = false;
+          bool foundEnd = false;
+
+          while (rng.moveStart("character", -1) == -1)
+          {
+            if (rng.text[0] == '.')
+            {
+              foundStart = true;
+              break;
+            }
+          }
+
+          while (rng.moveEnd("character", 1 ) == 1)
+          {
+            if (rng.text.Last() == '.')
+            {
+              foundEnd = true;
+              break;
+            }
+          }
+
+          if (foundStart && foundEnd)
+          {
+            mouseoverHintSvc.HideContext(rng);
+          }
+        }
+      }
 
       // Return to the parent element
       Svc.SM.UI.ElementWdw.GoToElement(restoreElementId);
-    }
-
-    /// <summary>
-    /// Get Cloze Hint options from the user.
-    /// </summary>
-    /// <returns></returns>
-    private ClozeHintOptions GetClozeHintOptions()
-    {
-
-      var wdwResult = OpenClozeHintWdw();
-      if (wdwResult.IsNull())
-        return null;
-
-      var hint = wdwResult?.Hint;
-      var location = wdwResult.Location;
-      if (hint.IsNullOrEmpty())
-        return null;
-
-      return new ClozeHintOptions(hint, location);
-
     }
 
     /// <summary>
@@ -188,7 +229,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     {
 
       // return if ClozeHintWdw is already open
-      if (CurrentWdw != null)
+      if (CurrentWdw != null && !CurrentWdw.IsClosed)
         return null;
 
       return Application.Current.Dispatcher.Invoke(() =>

@@ -34,6 +34,19 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
     /// </summary>
     public ClozeLocation Location { get; set; }
 
+    /// <summary>
+    /// Obscure the context around the cloze sentence with a mouseover hint
+    /// </summary>
+    public bool HideContext { get; set; }
+
+    /// <summary>
+    /// Obscure the cloze with a mouseover hint
+    /// </summary>
+    public bool HideCloze { get; set; }
+
+    /// <summary>
+    /// True if the popup window is closed
+    /// </summary>
     public bool IsClosed { get; set; }
 
     private AdvancedClozerCfg Config => Svc<AdvancedClozerPlugin>.Plugin.Config;
@@ -46,6 +59,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
       InitializeComponent();
       FocusComboBox();
       CreateAllHints();
+      SetUserDefaults();
       ClozeHintTextbox.ItemsSource = AllHints;
       Closed += ClozeHintWdw_Closed;
 
@@ -62,10 +76,20 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
     private void SetUserDefaults()
     {
 
-      if (Config.clozeLocation == ClozeLocation.Naess)
+      if (Config.clozeLocation == ClozeLocation.Outside)
         ClozeLocationNaess.IsChecked = true;
       else
         ClozeLocationNormal.IsChecked = true;
+
+      if (Config.MouseoverClozeDefault)
+        HiddenClozeCheckbox.IsChecked = true;
+      else
+        HiddenClozeCheckbox.IsChecked = false;
+
+      if (Config.MouseoverContextDefault)
+        HiddenContextCheckbox.IsChecked = true;
+      else
+        HiddenContextCheckbox.IsChecked = false;
 
     }
 
@@ -97,8 +121,16 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
       Hint = ClozeHintTextbox.Text.Trim();
 
       Location = ClozeLocationNormal.IsChecked == true
-        ? ClozeLocation.Normal
-        : ClozeLocation.Naess;
+        ? ClozeLocation.Inside
+        : ClozeLocation.Outside;
+
+      HideCloze = HiddenClozeCheckbox.IsChecked == true
+        ? true
+        : false;
+
+      HideContext = HiddenContextCheckbox.IsChecked == true
+        ? true
+        : false;
 
       if (Config.SaveClozeHintHistory)
       {

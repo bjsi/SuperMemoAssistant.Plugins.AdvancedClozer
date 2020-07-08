@@ -24,15 +24,16 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
   public class AdvancedClozerCfg : INotifyPropertyChangedEx
   {
 
-    [Field(Name = "Default Cloze Location")]
+    [Field(Name = "Default Cloze Location?")]
     [SelectFrom(typeof(ClozeLocation),
                 SelectionType = SelectionType.RadioButtonsInline)]
-    public ClozeLocation clozeLocation { get; set; } = ClozeLocation.Naess;
+    public ClozeLocation clozeLocation { get; set; } = ClozeLocation.Outside;
 
-    [Field(Name = "Default Cloze Style")]
-    [SelectFrom(typeof(ClozeStyle),
-                SelectionType = SelectionType.RadioButtonsInline)]
-    public ClozeStyle clozeStyle { get; set; } = ClozeStyle.Normal;
+    [Field(Name = "Mouseover Cloze option selected by default?")]
+    public bool MouseoverClozeDefault { get; set; } = false;
+
+    [Field(Name = "Mouseover Context option selected by default?")]
+    public bool MouseoverContextDefault { get; set; } = false;
 
     [Field(Name = "Cloze Hint Autocomplete List")]
     [MultiLine]
@@ -63,7 +64,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
     public override string ToString()
     {
-      return "AdvancedClozer";
+      return "Advanced Clozer";
     }
 
     public event PropertyChangedEventHandler PropertyChanged;

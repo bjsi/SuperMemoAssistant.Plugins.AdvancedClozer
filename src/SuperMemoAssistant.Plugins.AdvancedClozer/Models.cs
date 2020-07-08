@@ -8,14 +8,8 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 {
   public enum ClozeLocation
   {
-    Normal,
-    Naess
-  }
-
-  public enum ClozeStyle
-  {
-    Normal,
-    Spoiler
+    Inside,
+    Outside
   }
 
   public class ClozeHintOptions

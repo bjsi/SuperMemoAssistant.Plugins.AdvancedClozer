@@ -1,5 +1,6 @@
 ﻿using mshtml;
 using SuperMemoAssistant.Extensions;
+using SuperMemoAssistant.Interop.SuperMemo.Content.Controls;
 using SuperMemoAssistant.Services;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,13 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
       return textSel.text;
 
+    }
+
+    public static IControlHtml GetFirstHtmlControl()
+    {
+      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+      var htmlCtrl = ctrlGroup?.GetFirstHtmlControl()?.AsHtml();
+      return htmlCtrl;
     }
   }
 }
