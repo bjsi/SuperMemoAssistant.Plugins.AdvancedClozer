@@ -4,7 +4,7 @@
 
 - Easily create cloze items with hints.
 - Saves hint history.
-- *Optionally* integrates with Mouseover Hints plugin to enable **experimental** 'Hide Cloze Context' and 'Mousover Cloze Hint' features
+- *Optionally* integrates with Mouseover Hints plugin to enable **experimental** 'Hide Context' and 'Mousover Cloze Hint' features
 
 ### Installation
 
@@ -14,8 +14,8 @@
 
 - Install Visual Studio 2019 or higher.
 - Select the following  VS components during the install:
-+ .NET desktop development
-+ .NET Core cross-platform development
+  + .NET desktop development
+  + .NET Core cross-platform development
 
 ##### Step-by-step Guide
 
@@ -53,10 +53,6 @@
 -
 -
 -
-
-#### Extensibility
-
-Advanced Clozer does not support plugin service extensions.
 
 ### Contributing Guide
 
