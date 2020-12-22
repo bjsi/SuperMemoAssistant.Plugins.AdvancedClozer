@@ -1,4 +1,20 @@
-﻿#region License & Metadata
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Windows;
+using System.Windows.Input;
+using Anotar.Serilog;
+using mshtml;
+using SuperMemoAssistant.Extensions;
+using SuperMemoAssistant.Plugins.AdvancedClozer.UI;
+using SuperMemoAssistant.Plugins.MouseoverHints.Interop;
+using SuperMemoAssistant.Services;
+using SuperMemoAssistant.Services.IO.HotKeys;
+using SuperMemoAssistant.Services.IO.Keyboard;
+using SuperMemoAssistant.Services.Sentry;
+using SuperMemoAssistant.Services.UI.Configuration;
+using SuperMemoAssistant.Sys.IO.Devices;
+
+#region License & Metadata
 
 // The MIT License (MIT)
 // 
@@ -31,25 +47,6 @@
 
 namespace SuperMemoAssistant.Plugins.AdvancedClozer
 {
-  using System.Diagnostics.CodeAnalysis;
-  using System.Linq;
-  using System.Runtime.Remoting;
-  using System.Windows;
-  using System.Windows.Input;
-  using Anotar.Serilog;
-  using mshtml;
-  using SuperMemoAssistant.Extensions;
-  using SuperMemoAssistant.Interop.SuperMemo.Core;
-  using SuperMemoAssistant.Plugins.AdvancedClozer.UI;
-  using SuperMemoAssistant.Plugins.MouseoverHints.Interop;
-  using SuperMemoAssistant.Services;
-  using SuperMemoAssistant.Services.IO.HotKeys;
-  using SuperMemoAssistant.Services.IO.Keyboard;
-  using SuperMemoAssistant.Services.Sentry;
-  using SuperMemoAssistant.Services.UI.Configuration;
-  using SuperMemoAssistant.Sys.IO.Devices;
-  using SuperMemoAssistant.Sys.Remoting;
-
   // ReSharper disable once UnusedMember.Global
   // ReSharper disable once ClassNeverInstantiated.Global
   [SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
@@ -248,7 +245,16 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       return Application.Current.Dispatcher.Invoke(() =>
       {
         CurrentWdw = new ClozeHintWdw();
-        CurrentWdw.ShowDialog();
+        CurrentWdw.ShowDialog(); // TODO: Don't use the window as a return value, just launch the
+        // cloze creation from the window
+
+        // Attempt to fix bug
+        //Win32Interop.ClickSimulateFocus(CurrentWdw);
+        //Win32Interop.SetForegroundWindow((new WindowInteropHelper(CurrentWdw)).Handle);
+        //Win32Interop.SetActiveWindow((new WindowInteropHelper(CurrentWdw)).Handle);
+        //FocusManager.SetFocusedElement(CurrentWdw, CurrentWdw.ClozeHintTextbox);
+        //System.Windows.Input.Keyboard.Focus(CurrentWdw.ClozeHintTextbox);
+
         return CurrentWdw.Confirmed
           ? CurrentWdw
           : null;

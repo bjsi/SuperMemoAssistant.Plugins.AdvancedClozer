@@ -5,6 +5,7 @@ using SuperMemoAssistant.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,23 +20,36 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     public static string GetSelectedText()
     {
 
-      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrlGroup?.FocusedControl?.AsHtml();
-      var htmlDoc = htmlCtrl?.GetDocument();
-      var sel = htmlDoc?.selection;
+      try
+      {
+        var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+        var htmlCtrl = ctrlGroup?.FocusedControl?.AsHtml();
+        var htmlDoc = htmlCtrl?.GetDocument();
+        var sel = htmlDoc?.selection;
 
-      if (!(sel?.createRange() is IHTMLTxtRange textSel))
-        return null;
+        if (!(sel?.createRange() is IHTMLTxtRange textSel))
+          return null;
 
-      return textSel.text;
+        return textSel.text;
+      }
+      catch (UnauthorizedAccessException) { }
+      catch (COMException) { }
+
+      return null;
 
     }
 
     public static IControlHtml GetFirstHtmlControl()
     {
-      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrlGroup?.GetFirstHtmlControl()?.AsHtml();
-      return htmlCtrl;
+      try
+      {
+        var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+        return ctrlGroup?.GetFirstHtmlControl()?.AsHtml();
+      }
+      catch (UnauthorizedAccessException) { }
+      catch (COMException) { }
+
+      return null;
     }
   }
 }

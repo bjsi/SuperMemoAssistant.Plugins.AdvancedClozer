@@ -2,4 +2,13 @@
 <Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
   <Anotar.Serilog />
   <PropertyChanged/>
+  <LoadAssembliesOnStartup ExcludeSystemAssemblies="false">
+    <ExcludeAssemblies>
+      Anotar.Serilog
+      Microsoft.CodeAnalysis
+      Microsoft.CodeAnalysis.CSharp
+      Microsoft.CodeAnalysis.CSharp.Workspaces
+      Microsoft.CodeAnalysis.Workspaces
+    </ExcludeAssemblies>
+  </LoadAssembliesOnStartup>
 </Weavers>
