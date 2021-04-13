@@ -1,16 +1,23 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.Remoting;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Anotar.Serilog;
+using HtmlAgilityPack;
 using mshtml;
 using SuperMemoAssistant.Extensions;
+using SuperMemoAssistant.Interop.Plugins;
+using SuperMemoAssistant.Interop.SuperMemo.Content.Contents;
+using SuperMemoAssistant.Interop.SuperMemo.Content.Models;
+using SuperMemoAssistant.Interop.SuperMemo.Elements.Builders;
+using SuperMemoAssistant.Interop.SuperMemo.Elements.Models;
 using SuperMemoAssistant.Plugins.AdvancedClozer.UI;
-using SuperMemoAssistant.Plugins.MouseoverHints.Interop;
 using SuperMemoAssistant.Services;
 using SuperMemoAssistant.Services.IO.HotKeys;
 using SuperMemoAssistant.Services.IO.Keyboard;
-using SuperMemoAssistant.Services.Sentry;
 using SuperMemoAssistant.Services.UI.Configuration;
 using SuperMemoAssistant.Sys.IO.Devices;
 
@@ -50,12 +57,12 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
   // ReSharper disable once UnusedMember.Global
   // ReSharper disable once ClassNeverInstantiated.Global
   [SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
-  public class AdvancedClozerPlugin : SentrySMAPluginBase<AdvancedClozerPlugin>
+  public class AdvancedClozerPlugin : SMAPluginBase<AdvancedClozerPlugin>
   {
     #region Constructors
 
     /// <inheritdoc />
-    public AdvancedClozerPlugin() : base("Enter your Sentry.io api key (strongly recommended)") { }
+    public AdvancedClozerPlugin() { }
 
     #endregion
 
@@ -63,13 +70,11 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
     /// <inheritdoc />
     public override string Name => "AdvancedClozer";
-    public AdvancedClozerCfg Config { get; set; }
+    public AdvancedClozerCfg Config { get; private set; }
 
     /// <inheritdoc />
     public override bool HasSettings => true;
     private ClozeHintWdw CurrentWdw { get; set; }
-    public IMouseoverHintSvc mouseoverHintSvc { get; set; }
-    private readonly char[] SentenceEndingPunct = new char[] { '.', '?', '!' };
 
     #endregion
 
@@ -79,27 +84,202 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
     /// <inheritdoc />
     /// 
 
-    private void LoadConfig()
+    private async Task LoadConfig()
     {
-      Config = Svc.Configuration.Load<AdvancedClozerCfg>() ?? new AdvancedClozerCfg();
+      Config = await Svc.Configuration.Load<AdvancedClozerCfg>() ?? new AdvancedClozerCfg();
     }
 
     protected override void PluginInit()
     {
 
-      LoadConfig();
+      LoadConfig().Wait();
 
       Svc.HotKeyManager
        .RegisterGlobal(
         "AdvancedClozer",
         "Create cloze hint",
-        HotKeyScopes.SMBrowser,
+        HotKeyScope.SMBrowser,
         new HotKey(Key.Z, KeyModifiers.AltShift),
         CreateClozeHint
+      )
+       .RegisterGlobal(
+        "ResurrectParent",
+        "Bring the parent of a cloze back to life",
+        HotKeyScope.SMBrowser,
+        new HotKey(Key.R, KeyModifiers.AltShift),
+        ResurrectParent
+      )
+       .RegisterGlobal(
+        "ClozeAsItem",
+        "Create a cloze as an item.",
+        HotKeyScope.SMBrowser,
+        new HotKey(Key.I, KeyModifiers.AltShift),
+        CreateItemCloze
       );
 
-      mouseoverHintSvc = GetService<IMouseoverHintSvc>();
 
+      Application.Current.Dispatcher.Invoke(() =>
+      {
+        var wdw = new ClozeHintWdw();
+        wdw.Width = 1;
+        wdw.Height = 1;
+        wdw.ShowAndActivate();
+        wdw.Close();
+      });
+
+    }
+
+    [LogToErrorOnException]
+    private void CreateItemCloze()
+    {
+      try
+      {
+        var parentEl = Svc.SM.UI.ElementWdw.CurrentElement;
+        if (parentEl == null || parentEl.Type == ElementType.Item)
+          return;
+
+        var selObj = ContentUtils.GetSelectionObject();
+        string selText = selObj?.htmlText;
+        if (selObj == null || string.IsNullOrEmpty(selText))
+          return;
+
+        var htmlCtrl = ContentUtils.GetFocusedHtmlCtrl();
+        var htmlDoc = htmlCtrl?.GetDocument();
+        if (htmlDoc == null)
+          return;
+
+        selObj.pasteHTML("[...]");
+        string questionChild = htmlDoc.body.innerHTML.Replace("[...]", "<SPAN class=cloze>[...]</SPAN>");
+
+        int MaxTextLength = 2000000000;
+        selObj.moveEnd("character", MaxTextLength);
+        selObj.moveStart("character", -MaxTextLength);
+
+        selObj.findText("[...]");
+        selObj.select();
+
+        selObj.pasteHTML("<SPAN class=clozed>" + selText + "</SPAN>");
+        string parentContent = htmlDoc.body.innerHTML;
+
+        htmlCtrl.Text = parentContent;
+
+        var references = ReferenceParser.GetReferences(parentContent);
+        CreateSMElement(RemoveReferences(questionChild), selText, references);
+
+      }
+      catch (RemotingException) { }
+    }
+
+    [LogToErrorOnException]
+    private void CreateSMElement(string question, string answer, References refs)
+    {
+
+      var contents = new List<ContentBase>();
+      var parent = Svc.SM.UI.ElementWdw.CurrentElement;
+      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+
+      contents.Add(new TextContent(true, question));
+      contents.Add(new TextContent(true, answer, displayAt: AtFlags.NonQuestion));
+
+      if (parent == null)
+      {
+        LogTo.Error("Failed to CreateSMElement because parent element was null");
+        return;
+      }
+
+      bool success = Svc.SM.Registry.Element.Add(
+        out _,
+        ElemCreationFlags.ForceCreate,
+        new ElementBuilder(ElementType.Item, contents.ToArray())
+          .WithParent(parent)
+          .WithLayout("Item")
+          .WithPriority(30)
+          .DoNotDisplay()
+          .WithReference((_) => refs)
+      );
+
+      if (success)
+      {
+        LogTo.Debug("Successfully created SM Element");
+      }
+      else
+      {
+        LogTo.Error("Failed to CreateSMElement");
+      }
+    }
+
+    private void ResurrectParent()
+    {
+      var currentElement = Svc.SM.UI.ElementWdw.CurrentElement;
+      var parentOfCurrent = currentElement.Parent;
+
+      var htmls = ContentUtils.GetHtmlCtrls();
+      if (htmls == null || htmls.Count < 2)
+      {
+        LogTo.Debug("Failed to resurrect. There are less than 2 html ctrls");
+        return;
+      }
+
+      var fst = htmls.FirstOrDefault();
+      var lst = htmls.LastOrDefault();
+
+      if (!fst.Text.Contains("[...]"))
+      {
+        LogTo.Debug("Failed to resurrect. There was no cloze marker found in the first html ctrl");
+        return;
+      }
+
+      var answer = lst.Text;
+
+      // Replace cloze marker with answer text.
+
+      var doc = new HtmlDocument();
+      doc.LoadHtml(fst.Text);
+      var cloze = doc.DocumentNode.SelectSingleNode("//span[@class='cloze']");
+      if (cloze == null)
+      {
+        LogTo.Debug("Failed to resurrect. Failed to find the cloze span.");
+        return;
+      }
+
+      cloze.Attributes["class"].Remove();
+      cloze.InnerHtml = answer;
+
+      var question = doc.DocumentNode.OuterHtml;
+      var refs = ReferenceParser.GetReferences(question);
+      question = RemoveReferences(question);
+
+      if (parentOfCurrent == null)
+      {
+        LogTo.Debug("Failed to resurrect parent. Parent element of current was null.");
+        return;
+      }
+
+      bool ret = Svc.SM.Registry.Element.Add(
+        out var value,
+        ElemCreationFlags.ForceCreate,
+        new ElementBuilder(ElementType.Topic, new ContentBase[] { new TextContent(true, question) })
+        .WithParent(parentOfCurrent)
+        .WithPriority(Config.ResurrectedParentPriority)
+        .WithReference(_ => refs)
+        .DoNotDisplay());
+
+      if (ret)
+      {
+        LogTo.Debug("Successfully resurrected parent of cloze");
+      }
+      else
+      {
+        LogTo.Error("Failed to resurrect parent of cloze");
+      }
+    }
+
+    private string RemoveReferences(string htmlText)
+    {
+      var idx = htmlText.IndexOf("HR SuperMemo", System.StringComparison.InvariantCultureIgnoreCase);
+      if (idx >= 0)
+        return htmlText.Substring(0, idx + 1);
+      return htmlText;
     }
 
     /// <summary>
@@ -124,8 +304,6 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
 
       ClozeLocation Location = wdw.Location;
       string Hint = wdw.Hint;
-      bool HideCloze = wdw.HideCloze;
-      bool HideContext = wdw.HideContext;
 
       if (Hint.IsNullOrEmpty())
         return;
@@ -148,7 +326,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       Svc.SM.UI.ElementWdw.GoToElement(newClozeId);
 
       // TODO: Loop over htmlCtrls for the first control with a cloze symbol
-      var htmlCtrl = ContentUtils.GetFirstHtmlControl();
+      var htmlCtrl = ContentUtils.GetClozeHtmlControl();
       var text = htmlCtrl?.Text;
       var htmlDoc = htmlCtrl?.GetDocument();
       var body = htmlDoc?.body as IHTMLBodyElement;
@@ -156,6 +334,7 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
       if (text.IsNullOrEmpty() || htmlCtrl.IsNull() || body.IsNull())
       {
         string msg = "Failed to create cloze: Failed to get text from the generated item";
+        MessageBox.Show(msg);
         LogTo.Error(msg);
         return;
       }
@@ -165,67 +344,6 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer
         : $"[...]({Hint})";
 
       htmlCtrl.Text = htmlCtrl.Text.Replace("[...]", replacement);
-
-      if (HideCloze)
-      {
-        var toFind = Location == ClozeLocation.Inside
-          ? replacement
-          : replacement.Substring(5);
-
-        var rng = body.createTextRange();
-        if (rng.findText(toFind))
-        {
-          rng.moveStart("character", 1);
-          rng.moveEnd("character", -1);
-          mouseoverHintSvc.CreateSingleHint(rng);
-
-          // This is necessary for the change to be saved
-          // Otherwise the change is only made visually and once you move away from the element, it reverts
-          htmlCtrl.Text = htmlCtrl.Text;
-        }
-      }
-
-      if (HideContext)
-      {
-        var rng = body.createTextRange();
-        if (rng.findText(replacement))
-        {
-
-          bool foundStart = false;
-          bool foundEnd = false;
-
-          // Move the beginning of the range backwards until the first character is
-          // sentence ending punctuation
-          while (rng.moveStart("character", -1) == -1)
-          {
-            if (SentenceEndingPunct.Any(x => x == rng.text[0]))
-            {
-              foundStart = true;
-              break;
-            }
-          }
-
-          // Move the end of the range backwards until the last character 
-          // is sentence ending punctuation
-          while (rng.moveEnd("character", 1 ) == 1)
-          {
-            if (SentenceEndingPunct.Any(x => x == rng.text.Last()))
-            {
-              foundEnd = true;
-              break;
-            }
-          }
-
-          if (foundStart && foundEnd)
-          {
-            bool ret = mouseoverHintSvc.HideContext(rng);
-
-            // This is necessary for the change to be saved
-            // Otherwise the change is only made visually and once you move away from the element, it reverts
-            htmlCtrl.Text = htmlCtrl.Text;
-          }
-        }
-      }
 
       // Return to the parent element
       Svc.SM.UI.ElementWdw.GoToElement(restoreElementId);

@@ -42,6 +42,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.32" />
     <PackageReference Include="LoadAssembliesOnStartup.Fody" Version="4.5.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -61,18 +62,10 @@
     <PackageReference Include="Sentry.Serilog">
       <Version>2.1.1</Version>
     </PackageReference>
-    <PackageReference Include="SuperMemoAssistant.Interop">
-      <Version>2.0.5-alpha.6</Version>
-    </PackageReference>
-    <PackageReference Include="SuperMemoAssistant.Services.Sentry">
-      <Version>2.0.5-alpha.2</Version>
-    </PackageReference>
+    <PackageReference Include="SuperMemoAssistant.Interop" Version="2.0.4.10" />
     <PackageReference Include="SuperMemoAssistant.Services.UI" Version="2.0.4.6" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\MouseoverHints.Interop\src\SuperMemoAssistant.Plugins.MouseoverHints.Interop\SuperMemoAssistant.Plugins.MouseoverHints.Interop.csproj" />
-  </ItemGroup>
   <Target Name="CopyOutput" AfterTargets="Build">
-    <Exec Command="xcopy /h /i /c /k /e /r /y &quot;$(TargetDir)*&quot; &quot;%25UserProfile%25\SuperMemoAssistant\Plugins\Development\$(ProjectName)&quot;" />
+    <Exec Command="xcopy /h /i /c /k /e /r /y &quot;$(TargetDir)*&quot; &quot;%25UserProfile%25\Documents\SuperMemoAssistant\Plugins\Development\$(ProjectName)&quot;" />
   </Target>
 </Project>

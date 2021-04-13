@@ -27,16 +27,6 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
     public ClozeLocation Location { get; set; }
 
     /// <summary>
-    /// Obscure the context around the cloze sentence with a mouseover hint
-    /// </summary>
-    public bool HideContext { get; set; }
-
-    /// <summary>
-    /// Obscure the cloze with a mouseover hint
-    /// </summary>
-    public bool HideCloze { get; set; }
-
-    /// <summary>
     /// True if the popup window is closed
     /// </summary>
     public bool IsClosed { get; set; }
@@ -52,22 +42,9 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
       FocusComboBox();
       CreateAllHints();
       SetUserDefaults();
-      CheckForMouseoverHintSvc();
       ClozeHintTextbox.ItemsSource = AllHints;
       this.Closed += ClozeHintWdw_Closed;
 
-    }
-
-    private void CheckForMouseoverHintSvc()
-    {
-      var svc = Svc<AdvancedClozerPlugin>.Plugin.mouseoverHintSvc;
-      if (svc == null)
-      {
-        HiddenClozeCheckbox.IsEnabled = false;
-        HiddenContextCheckbox.IsEnabled = false;
-        MouseoverClozeDisclaimer.Visibility = Visibility.Visible;
-        MouseoverContextDisclaimer.Visibility = Visibility.Visible;
-      }
     }
 
     private void ClozeHintWdw_Closed(object sender, EventArgs e)
@@ -85,16 +62,6 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
         ClozeLocationNaess.IsChecked = true;
       else
         ClozeLocationNormal.IsChecked = true;
-
-      if (Config.MouseoverClozeDefault)
-        HiddenClozeCheckbox.IsChecked = true;
-      else
-        HiddenClozeCheckbox.IsChecked = false;
-
-      if (Config.MouseoverContextDefault)
-        HiddenContextCheckbox.IsChecked = true;
-      else
-        HiddenContextCheckbox.IsChecked = false;
 
     }
 
@@ -128,14 +95,6 @@ namespace SuperMemoAssistant.Plugins.AdvancedClozer.UI
       Location = ClozeLocationNormal.IsChecked == true
         ? ClozeLocation.Inside
         : ClozeLocation.Outside;
-
-      HideCloze = HiddenClozeCheckbox.IsChecked == true
-        ? true
-        : false;
-
-      HideContext = HiddenContextCheckbox.IsChecked == true
-        ? true
-        : false;
 
       if (Config.SaveClozeHintHistory)
       {

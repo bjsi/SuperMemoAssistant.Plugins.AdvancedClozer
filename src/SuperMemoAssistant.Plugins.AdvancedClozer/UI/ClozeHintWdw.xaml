@@ -11,7 +11,7 @@
         Topmost="True"
         KeyDown="MetroWindow_KeyDown"
         WindowStartupLocation="CenterScreen"
-        Height="300"
+        Height="250"
         >
   <mah:MetroWindow.Resources>
     <ResourceDictionary>
@@ -30,8 +30,6 @@
     <Grid.RowDefinitions>
       <RowDefinition Height="2*"></RowDefinition>
       <RowDefinition Height="1.5*"></RowDefinition>
-      <RowDefinition Height="1*"></RowDefinition>
-      <RowDefinition Height="1*"></RowDefinition>
       <RowDefinition Height="50"></RowDefinition>
     </Grid.RowDefinitions>
 
@@ -108,39 +106,7 @@
         </RadioButton>
       </Grid>
     </Grid>
-    
-    <!-- Hide Cloze Checkbox -->
-    <StackPanel Orientation="Horizontal"
-                Grid.Row="2">
-      <Label Margin="5"
-             FontWeight="Bold"
-             Content="Mouseover Cloze?"/>
-      <CheckBox Name="HiddenClozeCheckbox"
-                TabIndex="3"/>
-      <Label Margin="8"
-             FontSize="10"
-             Foreground="Gray"
-             Name="MouseoverClozeDisclaimer"
-             Visibility="Hidden"
-             Content="(Requires MouseoverHints)"/>
-    </StackPanel>
-    
-    <!-- Hide Context Checkbox -->
-    <StackPanel Orientation="Horizontal"
-                Grid.Row="3">
-      <Label Margin="5"
-             FontWeight="Bold"
-             Content="Mouseover Context?"/>
-      <CheckBox Name="HiddenContextCheckbox"
-                TabIndex="4"/>
-      <Label Margin="7"
-             FontSize="10"
-             Foreground="Gray"
-             Name="MouseoverContextDisclaimer"
-             Visibility="Hidden"
-             Content="(Requires MouseoverHints)"/>
-    </StackPanel>
-    
+
       <!-- Ok and Cancel Buttons -->
       <Grid Grid.Row="4">
         <Button Content="Create"
